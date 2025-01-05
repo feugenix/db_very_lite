@@ -3,7 +3,7 @@ import {
   createGetRequest,
   createSetRequest,
   parseResponse,
-} from "./binary-protocol.ts";
+} from "./binary_protocol.ts";
 import * as net from "node:net";
 import process from "node:process";
 

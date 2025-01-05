@@ -1,5 +1,5 @@
 import * as net from "node:net";
-import { encodeResponse, ProtocolMessage } from "./binary-protocol.ts";
+import { encodeResponse, ProtocolMessage } from "./binary_protocol.ts";
 import { SSTablesList } from "./sstables.ts";
 
 let store: SSTablesList | null = null;

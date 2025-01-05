@@ -1,4 +1,4 @@
-import { createGetRequest, parseResponse } from "./binary-protocol.ts";
+import { createGetRequest, parseResponse } from "./binary_protocol.ts";
 import * as net from "node:net";
 
 const client = net.createConnection({ port: 12345 }, () => {
