@@ -1,3 +1,5 @@
+import { concat } from "@std/bytes";
+
 const PROTOCOL_VERSION = 0x01; // Current protocol version
 
 // Command codes
@@ -133,7 +135,7 @@ function createSetRequest(entityName: string, entityValue: string): Uint8Array {
   const value = encodeString(entityValue);
   return ProtocolMessage.encodeRequest(
     "SET",
-    new Uint8Array([...name, ...value]),
+    concat([name, value]),
   );
 }
 

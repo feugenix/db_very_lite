@@ -3,7 +3,10 @@
   "specifiers": {
     "jsr:@std/assert@*": "1.0.10",
     "jsr:@std/assert@1": "1.0.10",
+    "jsr:@std/assert@^1.0.10": "1.0.10",
+    "jsr:@std/bytes@1.0.4": "1.0.4",
     "jsr:@std/internal@^1.0.5": "1.0.5",
+    "jsr:@std/testing@1.0.8": "1.0.8",
     "npm:@types/node@*": "22.5.4"
   },
   "jsr": {
@@ -13,8 +16,18 @@
         "jsr:@std/internal"
       ]
     },
+    "@std/bytes@1.0.4": {
+      "integrity": "11a0debe522707c95c7b7ef89b478c13fb1583a7cfb9a85674cd2cc2e3a28abc"
+    },
     "@std/internal@1.0.5": {
       "integrity": "54a546004f769c1ac9e025abd15a76b6671ddc9687e2313b67376125650dc7ba"
+    },
+    "@std/testing@1.0.8": {
+      "integrity": "ceef535808fb7568e91b0f8263599bd29b1c5603ffb0377227f00a8ca9fe42a2",
+      "dependencies": [
+        "jsr:@std/assert@^1.0.10",
+        "jsr:@std/internal"
+      ]
     }
   },
   "npm": {
@@ -69,7 +82,9 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@std/assert@1"
+      "jsr:@std/assert@1",
+      "jsr:@std/bytes@1.0.4",
+      "jsr:@std/testing@1.0.8"
     ]
   }
 }
