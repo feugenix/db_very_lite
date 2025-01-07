@@ -4,6 +4,7 @@ const PROTOCOL_VERSION = 0x01; // Current protocol version
 
 // Command codes
 const COMMANDS = {
+  HANDSHAKE: 0x00,
   GET: 0x01,
   SET: 0x02,
   DELETE: 0x03,
@@ -143,6 +144,13 @@ function createDeleteRequest(entityName: string): Uint8Array {
   return ProtocolMessage.encodeRequest("DELETE", encodeString(entityName));
 }
 
+function createHandshakeRequest(): Uint8Array {
+  return ProtocolMessage.encodeRequest(
+    "HANDSHAKE",
+    new Uint8Array(PROTOCOL_VERSION),
+  );
+}
+
 function parseResponse(
   buffer: Uint8Array,
 ): { status: string; payload: string } {
@@ -165,6 +173,7 @@ export {
   COMMANDS,
   createDeleteRequest,
   createGetRequest,
+  createHandshakeRequest,
   createSetRequest,
   encodeResponse,
   parseResponse,

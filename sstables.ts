@@ -1,24 +1,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-const DATA_DIR = "data/";
-const MAX_ENTITIES_NUMBER = 4;
-
-interface PartialEntityList {
-  get(key: string): KeyMetadata | null;
-  set(key: string, value: string): void;
-  get size(): number;
-}
-
-class KeyMetadata {
-  public data: string;
-  public isDeleted: boolean = false;
-
-  constructor(data: string, isDeleted: boolean = false) {
-    this.data = data;
-    this.isDeleted = isDeleted;
-  }
-}
+const DEFAULT_DATA_DIR = "data/";
+const DEFAULT_MAX_ENTITIES_NUMBER = 100;
 
 class LinkedListNode<T> {
   next: LinkedListNode<T> | undefined;
@@ -101,6 +85,22 @@ class LinkedList<T> {
 
       current_node = current_node.next;
     }
+  }
+}
+
+interface PartialEntityList {
+  get(key: string): KeyMetadata | null;
+  set(key: string, value: string): void;
+  get size(): number;
+}
+
+class KeyMetadata {
+  public data: string;
+  public isDeleted: boolean = false;
+
+  constructor(data: string, isDeleted: boolean = false) {
+    this.data = data;
+    this.isDeleted = isDeleted;
   }
 }
 
@@ -211,13 +211,31 @@ class SSTable implements PartialEntityList {
   }
 }
 
+class SSTablesListOptions {
+  data_dir: string;
+  max_entities_number: number;
+
+  constructor(
+    data_dir: string = DEFAULT_DATA_DIR,
+    max_entities_number: number = DEFAULT_MAX_ENTITIES_NUMBER,
+  ) {
+    this.data_dir = data_dir;
+    this.max_entities_number = max_entities_number;
+  }
+}
+
 class SSTablesList {
   private memTable = new MemoryTable();
   private partial_entities_lists: LinkedList<PartialEntityList>;
+  private data_dir: string;
+  private max_entities_number: number;
 
-  constructor() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR);
+  constructor(options: SSTablesListOptions) {
+    this.data_dir = options.data_dir;
+    this.max_entities_number = options.max_entities_number;
+
+    if (!fs.existsSync(this.data_dir)) {
+      fs.mkdirSync(this.data_dir);
     }
 
     this.partial_entities_lists = new LinkedList<PartialEntityList>([
@@ -229,38 +247,39 @@ class SSTablesList {
   set(key: string, value: string): void {
     this.memTable.set(key, value);
 
-    if (this.memTable.size >= MAX_ENTITIES_NUMBER) {
-      this.flushMemTable();
-    }
+    this.flushMemTableConditionally();
   }
 
   delete(key: string): void {
     this.memTable.delete(key);
 
-    if (this.memTable.size >= MAX_ENTITIES_NUMBER) {
-      this.flushMemTable();
-    }
+    this.flushMemTableConditionally();
   }
 
-  public flushMemTable() {
+  public flushMemTableConditionally() {
+    if (this.memTable.size < this.max_entities_number) {
+      return;
+    }
+
     const file_path = path.resolve(
-      DATA_DIR,
+      this.data_dir,
       `sstable-${Date.now()}.json`,
     );
     const sstable = this.memTable.flushToSSTable(file_path);
     if (!sstable) {
       return;
     }
+
     this.partial_entities_lists?.insertAfterHead(sstable);
   }
 
   private readFromDisk() {
-    const files = fs.readdirSync(DATA_DIR);
+    const files = fs.readdirSync(this.data_dir);
     // sort files so the newest ones are last and will be inserted in the beginning of the list
     files.sort();
 
     files.forEach((file) => {
-      const sstable = new SSTable(path.resolve(DATA_DIR, file), []);
+      const sstable = new SSTable(path.resolve(this.data_dir, file), []);
       sstable.readFromDisk();
       this.partial_entities_lists.insertAfterHead(sstable);
     });
@@ -289,4 +308,4 @@ class SSTablesList {
   }
 }
 
-export { SSTablesList };
+export { SSTablesList, SSTablesListOptions };

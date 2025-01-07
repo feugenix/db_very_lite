@@ -1,25 +1,49 @@
 import {
   createDeleteRequest,
   createGetRequest,
+  createHandshakeRequest,
   createSetRequest,
   parseResponse,
 } from "./binary_protocol.ts";
 import * as net from "node:net";
 import process from "node:process";
+import { parseArgs } from "@std/cli";
 
-function parseArgs(): { cmd: string; params: string[] } {
-  const args = process.argv.slice(2); // Exclude "node" and script name
-  if (args.length < 1) {
-    console.error("Usage: cli-client <COMMAND> [args...]");
+class ClientOptions {
+  port: number;
+
+  constructor(port: number) {
+    this.port = port;
+  }
+}
+
+function getArgsFromCLI(): {
+  options: ClientOptions;
+  cmd: string;
+  params: string[];
+} {
+  const args = parseArgs(Deno.args, {
+    alias: { p: "port" },
+    default: { port: 12345 },
+  });
+
+  if (args._.length < 1) {
+    console.error("Usage: cli [OPTIONS] <COMMAND> [args...]");
+    console.error("OPTIONS: --port | -p <port>");
     process.exit(1);
   }
 
-  const [cmd, ...params] = args;
-  return { cmd: cmd.toUpperCase(), params };
+  const stringifiedArgs = args._.map((arg) => arg.toString());
+  const [cmd, ...params] = stringifiedArgs;
+  return {
+    options: new ClientOptions(args.port),
+    cmd: cmd.toUpperCase(),
+    params,
+  };
 }
 
-function sendRequest(cmdBuffer: Uint8Array): void {
-  const client = net.createConnection({ port: 12345 }, () => {
+function sendRequest(options: ClientOptions, cmdBuffer: Uint8Array): void {
+  const client = net.createConnection({ port: options.port }, () => {
     client.write(cmdBuffer);
   });
 
@@ -30,19 +54,19 @@ function sendRequest(cmdBuffer: Uint8Array): void {
   });
 
   client.on("error", (err) => {
-    console.error("Error:", err.message);
+    console.error("Error:", err);
     client.end();
   });
 }
 
-const { cmd, params } = parseArgs();
+const { options, cmd, params } = getArgsFromCLI();
 
 let request: Uint8Array;
 try {
   switch (cmd) {
     case "GET":
       if (params.length !== 1) {
-        console.error("Usage: cli-client GET <entity_name>");
+        console.error("Usage: cli GET <entity_name>");
         process.exit(1);
       }
       request = createGetRequest(params[0]);
@@ -50,7 +74,7 @@ try {
 
     case "SET":
       if (params.length !== 2) {
-        console.error("Usage: cli-client SET <entity_name> <entity_value>");
+        console.error("Usage: cli SET <entity_name> <entity_value>");
         process.exit(1);
       }
       request = createSetRequest(params[0], params[1]);
@@ -58,10 +82,14 @@ try {
 
     case "DELETE":
       if (params.length !== 1) {
-        console.error("Usage: cli-client DELETE <entity_name>");
+        console.error("Usage: cli DELETE <entity_name>");
         process.exit(1);
       }
       request = createDeleteRequest(params[0]);
+      break;
+
+    case "HANDSHAKE":
+      request = createHandshakeRequest();
       break;
 
     default:
@@ -74,4 +102,4 @@ try {
   process.exit(1);
 }
 
-sendRequest(request);
+sendRequest(options, request);
