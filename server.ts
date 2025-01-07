@@ -2,6 +2,16 @@ import * as net from "node:net";
 import { encodeResponse, ProtocolMessage } from "./binary_protocol.ts";
 import { SSTablesList, SSTablesListOptions } from "./sstables.ts";
 
+const DEFAULT_PORT = 12345;
+
+class ServerOptions {
+  port: number;
+
+  constructor(port: number = DEFAULT_PORT) {
+    this.port = port;
+  }
+}
+
 let store: SSTablesList | null = null;
 
 const server = net.createServer((socket) => {
@@ -75,15 +85,14 @@ function handleExit() {
   }
 }
 
-function init(port: number = 12345) {
-  const options = new SSTablesListOptions();
-  store = new SSTablesList(options);
+function init(options: ServerOptions) {
+  store = new SSTablesList(new SSTablesListOptions());
 
   Deno.addSignalListener("SIGINT", handleExit);
 
-  server.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
+  server.listen(options.port, () => {
+    console.log(`Server listening on port ${options.port}`);
   });
 }
 
-export { init };
+export { init, ServerOptions };

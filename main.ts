@@ -7,7 +7,7 @@ function main() {
     alias: { p: "port" },
   });
 
-  server.init(args.port);
+  server.init(new server.ServerOptions(args.port));
 }
 
 if (import.meta.main) {
