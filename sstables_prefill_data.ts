@@ -1,7 +1,7 @@
-import { SSTablesList } from "./sstables.ts";
+import { SSTablesList, SSTablesListOptions } from "./sstables.ts";
 
 // Test Example
-const ssTablesList = new SSTablesList();
+const ssTablesList = new SSTablesList(new SSTablesListOptions());
 
 // Simulate writes
 ssTablesList.set("a", "apple");
